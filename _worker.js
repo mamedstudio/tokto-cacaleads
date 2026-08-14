@@ -1,4 +1,4 @@
-// ==================== TOKTO CAÇA-LEADS v4 ====================
+// ==================== TOKTO CAÇA-LEADS v5 ====================
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 const HTML = `<!DOCTYPE html>
@@ -13,7 +13,8 @@ const HTML = `<!DOCTYPE html>
 .wrap{max-width:560px;margin:0 auto}h1{font-size:20px;text-align:center;color:var(--orange)}
 .card{background:var(--card);border:1px solid var(--bord);border-radius:14px;padding:16px;margin-bottom:14px}
 label{display:block;font-size:12px;color:var(--mut);margin:8px 0 4px;font-weight:600}
-input,select{width:100%;padding:12px;background:#0d131f;border:1px solid var(--bord);border-radius:10px;color:#fff;font-size:15px;outline:none}
+input,select,textarea{width:100%;padding:12px;background:#0d131f;border:1px solid var(--bord);border-radius:10px;color:#fff;font-size:15px;outline:none;font-family:inherit}
+textarea{min-height:70px;resize:vertical}
 .btn{width:100%;padding:14px;border:none;border-radius:10px;font-weight:bold;font-size:15px;cursor:pointer;margin-top:10px}
 .btn-blue{background:var(--blue);color:#fff}.btn-green{background:var(--green);color:#fff}
 pre{background:#0d131f;border:1px solid var(--bord);border-radius:10px;padding:12px;white-space:pre-wrap;font-size:13px;color:#e2e8f0;font-family:inherit}
@@ -43,6 +44,7 @@ pre{background:#0d131f;border:1px solid var(--bord);border-radius:10px;padding:1
 <label>📷 Foto do produto (arquivo)</label><input type="file" id="foto" accept="image/*">
 <label>ou cole a URL da foto</label><input id="fotoUrl" placeholder="https://...">
 <label>Nome da peça</label><input id="peca" placeholder="Sofá 3 lugares">
+<label>Descrição</label><textarea id="desc" placeholder="Ex: Tecido suede marrom, 2,20m, pés de madeira maciça, entrega em até 7 dias."></textarea>
 <label>Preço que a loja recebe (R$)</label><input id="preco" type="number" placeholder="2000">
 <button class="btn btn-green" onclick="gerarCupom()">🎨 Gerar cupom de exemplo</button>
 
@@ -80,7 +82,7 @@ outro:'"quanto tá?" e "guarda pra mim"'
 function fileToDataUrl(file,max){max=max||800;return new Promise(function(res){var rd=new FileReader();rd.onload=function(e){var img=new Image();img.onload=function(){var c=document.createElement('canvas');var sc=Math.min(1,max/Math.max(img.width,img.height));c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.8));};img.src=e.target.result;};rd.readAsDataURL(file);});}
 async function gerarCupom(){
 var msg=document.getElementById('msg');
-var body={name:document.getElementById('peca').value,price:parseFloat(document.getElementById('preco').value)||0,loja:document.getElementById('loja').value||'sua loja',cidade:document.getElementById('cidade').value,vertical:document.getElementById('vertical').value};
+var body={name:document.getElementById('peca').value,desc:document.getElementById('desc').value,price:parseFloat(document.getElementById('preco').value)||0,loja:document.getElementById('loja').value||'sua loja',cidade:document.getElementById('cidade').value,vertical:document.getElementById('vertical').value};
 var f=document.getElementById('foto');
 if(f.files&&f.files[0]){body.dataUrl=await fileToDataUrl(f.files[0]);}
 else{var u=document.getElementById('fotoUrl').value;if(u)body.imageUrl=u;}
@@ -152,6 +154,7 @@ function renderCupom(r, link){
   const anchor=buyer*1.3;
   const brl=v=>Number(v).toFixed(2).replace('.',',');
   const pix='00020126360014BR.GOV.BCB.PIX0114cupomclic-'+r.id+'5204000053039865406'+buyer.toFixed(2)+'5802BR5909CUPOMCLIC6007MARILIA62070503***6304DEMO';
+  const desc=esc(r.desc||'');
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Cupom • ${esc(r.name)}</title>
@@ -161,7 +164,7 @@ header{background:#f97316;color:#fff;padding:10px 16px;display:flex;align-items:
 header b{font-size:17px;display:block}header small{opacity:.9;font-size:12px;display:block}
 main{max-width:480px;margin:16px auto;padding:0 14px}
 .card{background:#fff;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.08);padding:18px;margin-bottom:14px}
-h1{font-size:20px;margin:0 0 6px}.desc{color:#4b5563}
+h1{font-size:20px;margin:0 0 6px}.desc{color:#4b5563;margin:8px 0;font-size:14px;line-height:1.5}
 .foto{width:100%;max-height:280px;object-fit:cover;border-radius:12px;margin:10px 0;cursor:zoom-in}
 .price{margin:12px 0}.price .de{color:#9ca3af;text-decoration:line-through;font-size:14px}.price .por{color:#16a34a;font-size:26px;font-weight:800}
 .qr{text-align:center;margin:14px 0}.qr img{border-radius:12px;border:6px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.15)}.qr p{font-size:12px;color:#6b7280;margin:6px 0 0}
@@ -179,7 +182,7 @@ button{width:100%;padding:14px;border:0;border-radius:12px;background:#16a34a;co
 <img id="foto" class="foto" src="${r.dataUrl}" alt="foto do produto — toque para ampliar">
 <span class="tag">🏪 ${esc(r.loja)} • ${esc(r.cidade)}</span>
 <h1>${esc(r.name)}</h1>
-<p class="desc">Cupom de demonstração gerado pelo Caça-Leads Tokto.</p>
+<p class="desc">${desc || 'Cupom de demonstração gerado pelo Caça-Leads Tokto.'}</p>
 <div class="price">
 <span class="de">de R$ ${brl(anchor)}</span><br>
 <span class="por">por R$ ${brl(buyer)}</span>
@@ -232,7 +235,7 @@ export default {
       if (!dataUrl) return new Response(JSON.stringify({ error: 'foto obrigatória' }), { headers: H });
       if (dataUrl.length > 1500000) return new Response(JSON.stringify({ error: 'foto muito grande — envie uma menor' }), { headers: H });
       const id = 'cp_' + Date.now().toString(36);
-      await env.LEADS.put('cupom_' + id, JSON.stringify({ id, dataUrl, name: b.name, price: b.price, loja: b.loja, cidade: b.cidade, vertical: b.vertical, at: new Date().toISOString() }));
+      await env.LEADS.put('cupom_' + id, JSON.stringify({ id, dataUrl, name: b.name, desc: b.desc||'', price: b.price, loja: b.loja, cidade: b.cidade, vertical: b.vertical, at: new Date().toISOString() }));
       return new Response(JSON.stringify({ id, link: url.origin + '/c?id=' + id }), { headers: H });
     }
 

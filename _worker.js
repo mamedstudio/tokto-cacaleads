@@ -73,7 +73,8 @@ var t='Oi '+loja+', aqui é Márcio do Tokto.\\n'
 +'Três lojas da região já usam nosso CupomClic pra vender nas lives e no WhatsApp:\\n'
 +'• Érica Store (Sta. Cruz do Rio Pardo)\\n• Anjoz Store (Bauru)\\n• Era Delas (Marília)\\n'
 +'A cliente clica no cupom e já paga no próprio link — sem '+DOR[v]+' no direct.\\n'
-+'Sem mensalidade. Só 15%...se vender.\\n'
++'Sem mensalidade. Você recebe 100% do preço que anunciar.\\n'
++'Os 15% são somados por cima — quem paga é quem compra, não sai do seu bolso.\\n'
 +'Marca aqui rapidinho: https://agendamento-cupomclic.vercel.app';
 document.getElementById('txtAbordagem').textContent=t;
 document.getElementById('out').style.display='block';

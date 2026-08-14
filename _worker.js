@@ -1,4 +1,4 @@
-// ==================== TOKTO CAÇA-LEADS v3 ====================
+// ==================== TOKTO CAÇA-LEADS v4 ====================
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 const HTML = `<!DOCTYPE html>
@@ -36,7 +36,7 @@ pre{background:#0d131f;border:1px solid var(--bord);border-radius:10px;padding:1
 <select id="vertical">
 <option value="moda">Moda</option><option value="moveis">Móveis</option>
 <option value="veiculos">Veículos</option><option value="joias">Joias</option>
-<option value="eletro">Eletro</option><option value="colchões">Colchões</option>
+<option value="eletro">Eletro</option><option value="colchoes">Colchões</option>
 <option value="construcao">Construção</option><option value="outro">Outro</option>
 </select>
 
@@ -146,25 +146,60 @@ carregar();
 </body>
 </html>`;
 
-function renderCupom(r){
-  const buyer=(Number(r.price)||0)*1.15;
-  const brl=v=>'R$ '+Number(v).toFixed(2).replace('.',',');
-  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cupom - ${esc(r.name)}</title><style>
-  body{background:#0d131f;color:#fff;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;margin:0;padding:20px;display:flex;justify-content:center}
-  .c{max-width:420px;width:100%;background:#161f30;border:1px solid #243044;border-radius:16px;overflow:hidden}
-  .h{background:#2563eb;padding:14px;text-align:center;font-weight:bold}
-  img{width:100%;display:block;max-height:380px;object-fit:cover}
-  .b{padding:18px}.n{font-size:18px;font-weight:bold}
-  .p{margin-top:10px;background:#0d131f;border:1px solid #243044;border-radius:10px;padding:12px;font-size:14px}
-  .g{color:#22c55e;font-weight:bold}.d{margin-top:12px;font-size:11px;color:#94a3b8;text-align:center}
-  </style></head><body><div class="c">
-  <div class="h">🎯 CupomClic</div>
-  <img src="${r.dataUrl}">
-  <div class="b">
-    <div class="n">${esc(r.name)}</div>
-    <div class="p">Você (lojista) recebe: <span class="g">${brl(r.price)}</span><br>Cliente paga: ${brl(buyer)} <span style="color:#94a3b8">(15% por cima)</span></div>
-    <div class="d">Demonstração gerada para ${esc(r.loja)} · ${esc(r.cidade)} — CupomClic/Tokto</div>
-  </div></div></body></html>`;
+function renderCupom(r, link){
+  const net=Number(r.price)||0;
+  const buyer=net*1.15;
+  const anchor=buyer*1.3;
+  const brl=v=>Number(v).toFixed(2).replace('.',',');
+  const pix='00020126360014BR.GOV.BCB.PIX0114cupomclic-'+r.id+'5204000053039865406'+buyer.toFixed(2)+'5802BR5909CUPOMCLIC6007MARILIA62070503***6304DEMO';
+  return `<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cupom • ${esc(r.name)}</title>
+<style>
+body{font:15px/1.5 system-ui;background:#fff7ed;color:#1f2937;margin:0}
+header{background:#f97316;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px}
+header b{font-size:17px;display:block}header small{opacity:.9;font-size:12px;display:block}
+main{max-width:480px;margin:16px auto;padding:0 14px}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.08);padding:18px;margin-bottom:14px}
+h1{font-size:20px;margin:0 0 6px}.desc{color:#4b5563}
+.foto{width:100%;max-height:280px;object-fit:cover;border-radius:12px;margin:10px 0;cursor:zoom-in}
+.price{margin:12px 0}.price .de{color:#9ca3af;text-decoration:line-through;font-size:14px}.price .por{color:#16a34a;font-size:26px;font-weight:800}
+.qr{text-align:center;margin:14px 0}.qr img{border-radius:12px;border:6px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.15)}.qr p{font-size:12px;color:#6b7280;margin:6px 0 0}
+button{width:100%;padding:14px;border:0;border-radius:12px;background:#16a34a;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.pix{display:none;background:#f0fdf4;border:1px dashed #16a34a;border-radius:10px;padding:10px;margin-top:10px;font-size:11px;word-break:break-all}
+.meta{font-size:13px;color:#6b7280;text-align:center}
+.tag{display:inline-block;background:#ffedd5;color:#9a3412;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}
+#zoomOverlay{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:99;padding:10px}
+#zoomOverlay.active{display:flex}#zoomOverlay img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px}
+#zoomHint{position:absolute;bottom:16px;left:0;right:0;text-align:center;color:#e5e7eb;font-size:12px}
+.tokto-footer{margin-top:20px;padding-top:16px;border-top:1px solid #e5e7eb;text-align:center}.tokto-footer p{font-size:12px;color:#6b7280}.tokto-footer a{color:#f97316;font-weight:600}
+</style></head><body>
+<header><div><b>🎯 cupom clic</b><small>ofertas incríveis pertinho de você</small></div></header>
+<main><div class="card">
+<img id="foto" class="foto" src="${r.dataUrl}" alt="foto do produto — toque para ampliar">
+<span class="tag">🏪 ${esc(r.loja)} • ${esc(r.cidade)}</span>
+<h1>${esc(r.name)}</h1>
+<p class="desc">Cupom de demonstração gerado pelo Caça-Leads Tokto.</p>
+<div class="price">
+<span class="de">de R$ ${brl(anchor)}</span><br>
+<span class="por">por R$ ${brl(buyer)}</span>
+</div>
+<div class="qr"><img width="180" height="180" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(link)}" alt="QR do cupom"><p>Apresente este QR na loja para validar</p></div>
+<button id="buy">🛒 Comprar com Pix</button>
+<div class="pix" id="pixbox">${pix}</div>
+<div class="tokto-footer"><p>Este cupom foi criado com <a href="https://tokto.com.br" target="_blank">Tokto</a> • Plataforma de cupons para lojistas</p></div>
+</div>
+<p class="meta">💰 Lojista recebe R$ ${brl(net)} • os 15% já estão por cima, pagos por quem compra</p>
+</main>
+<div id="zoomOverlay"><img id="zoomImg" alt="foto ampliada"><p id="zoomHint">toque para fechar 🔍</p></div>
+<script>
+var PIX="${pix}";
+document.getElementById('buy').onclick=function(){var b=document.getElementById('pixbox');b.style.display='block';this.textContent='✅ Pix copia-e-cola gerado!';if(navigator.clipboard)navigator.clipboard.writeText(PIX);};
+var foto=document.getElementById('foto');
+foto.onclick=function(){document.getElementById('zoomImg').src=foto.src;document.getElementById('zoomOverlay').classList.add('active');};
+document.getElementById('zoomOverlay').onclick=function(){this.classList.remove('active');};
+</script>
+</body></html>`;
 }
 
 export default {
@@ -178,7 +213,7 @@ export default {
       const id = url.searchParams.get('id');
       const rec = JSON.parse(await env.LEADS.get('cupom_' + id) || 'null');
       if (!rec) return new Response('Cupom não encontrado.', { status: 404 });
-      return new Response(renderCupom(rec), { headers: { 'Content-Type': 'text/html;charset=utf-8' } });
+      return new Response(renderCupom(rec, url.origin + '/c?id=' + id), { headers: { 'Content-Type': 'text/html;charset=utf-8' } });
     }
 
     if (url.pathname === '/api/cupom' && req.method === 'POST') {

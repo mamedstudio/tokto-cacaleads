@@ -1,4 +1,4 @@
-// ==================== TOKTO CAÇA-LEADS v2 ====================
+// ==================== TOKTO CAÇA-LEADS v3 ====================
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 const HTML = `<!DOCTYPE html>
@@ -36,7 +36,7 @@ pre{background:#0d131f;border:1px solid var(--bord);border-radius:10px;padding:1
 <select id="vertical">
 <option value="moda">Moda</option><option value="moveis">Móveis</option>
 <option value="veiculos">Veículos</option><option value="joias">Joias</option>
-<option value="eletro">Eletro</option><option value="colchoes">Colchões</option>
+<option value="eletro">Eletro</option><option value="colchões">Colchões</option>
 <option value="construcao">Construção</option><option value="outro">Outro</option>
 </select>
 
@@ -116,20 +116,31 @@ if(r.ok){document.getElementById('msg').textContent='💾 Lead salvo!';carregar(
 async function carregar(){
 var r=await fetch('/api/leads');var d=await r.json();
 var el=document.getElementById('lista');el.innerHTML='';
+var COR={abordado:'#d97706',agendado:'#2563eb',convertido:'#22c55e'};
 (d.leads||[]).forEach(function(l){
 var div=document.createElement('div');div.className='lead';
-div.innerHTML='<b>'+esc(l.loja)+'</b> · '+esc(l.cidade)+' · '+esc(l.vertical)+' <span class="st">'+l.status+'</span>'
-+'<div class="row"><button style="background:#2563eb;color:#fff" onclick="recopiar(\\''+l.id+'\\')">📋</button>'
-+'<button style="background:#d97706;color:#fff" onclick="status(\\''+l.id+'\\',\\'abordado\\')">abordado</button>'
-+'<button style="background:#2563eb;color:#fff" onclick="status(\\''+l.id+'\\',\\'agendado\\')">agendado</button>'
-+'<button style="background:#22c55e;color:#fff" onclick="status(\\''+l.id+'\\',\\'convertido\\')">convertido</button></div>';
+var html='<b>'+esc(l.loja)+'</b> · '+esc(l.cidade)+' · '+esc(l.vertical)+' <span class="st">'+l.status+'</span>';
+html+='<div class="row">';
+html+='<button style="background:#334155;color:#fff" title="copiar abordagem" onclick="recopiar(\\''+l.id+'\\')">📋 copiar</button>';
+html+='<button style="background:#7f1d1d;color:#fff" title="excluir lead" onclick="del(\\''+l.id+'\\')">🗑️</button>';
+['abordado','agendado','convertido'].forEach(function(st){
+var ativo=(l.status===st);
+html+='<button style="background:'+(ativo?COR[st]:'#243044')+';color:'+(ativo?'#fff':'#64748b')+'" onclick="status(\\''+l.id+'\\',\\''+st+'\\')">'+st+'</button>';
+});
+html+='</div>';
+div.innerHTML=html;
 el.appendChild(div);
 });
 window._leads=d.leads||[];
 }
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
-function recopiar(id){var l=(window._leads||[]).find(function(x){return x.id===id});if(l){navigator.clipboard.writeText(l.abordagem);}}
+function recopiar(id){var l=(window._leads||[]).find(function(x){return x.id===id});if(l){navigator.clipboard.writeText(l.abordagem);document.getElementById('msg').textContent='✅ Abordagem copiada!';}}
 async function status(id,st){await fetch('/api/lead',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:st})});carregar();}
+async function del(id){
+if(!confirm('Excluir este lead?'))return;
+await fetch('/api/lead',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})});
+carregar();
+}
 carregar();
 </script>
 </body>
@@ -209,6 +220,14 @@ export default {
       const l = leads.find(x => x.id === b.id);
       if (l) { l.status = b.status; await env.LEADS.put('leads', JSON.stringify(leads)); }
       return new Response(JSON.stringify({ ok: !!l }), { headers: H });
+    }
+
+    if (url.pathname === '/api/lead' && req.method === 'DELETE') {
+      const b = await req.json();
+      let leads = JSON.parse(await env.LEADS.get('leads') || '[]');
+      leads = leads.filter(x => x.id !== b.id);
+      await env.LEADS.put('leads', JSON.stringify(leads));
+      return new Response(JSON.stringify({ ok: true }), { headers: H });
     }
 
     return new Response(JSON.stringify({ error: 'não encontrado' }), { status: 404, headers: H });

@@ -1,4 +1,4 @@
-// ==================== TOKTO CAÇA-LEADS v5 ====================
+// ==================== TOKTO CAÇA-LEADS v6 ====================
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 const HTML = `<!DOCTYPE html>
@@ -22,6 +22,7 @@ pre{background:#0d131f;border:1px solid var(--bord);border-radius:10px;padding:1
 .lead b{color:var(--orange)}
 .st{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:bold;background:#243044}
 .row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}.row button{flex:1;padding:8px;border:none;border-radius:8px;font-size:12px;font-weight:bold;cursor:pointer}
+.row select{flex:1;background:#243044;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:bold;padding:8px;outline:none}
 #cupomOut a{color:#38bdf8;word-break:break-all}
 </style>
 </head>
@@ -43,9 +44,9 @@ pre{background:#0d131f;border:1px solid var(--bord);border-radius:10px;padding:1
 
 <label>📷 Foto do produto (arquivo)</label><input type="file" id="foto" accept="image/*">
 <label>ou cole a URL da foto</label><input id="fotoUrl" placeholder="https://...">
-<label>Nome da peça</label><input id="peca" placeholder="Sofá 3 lugares">
-<label>Descrição</label><textarea id="desc" placeholder="Ex: Tecido suede marrom, 2,20m, pés de madeira maciça, entrega em até 7 dias."></textarea>
-<label>Preço que a loja recebe (R$)</label><input id="preco" type="number" placeholder="2000">
+<label>Nome da peça</label><input id="peca" placeholder="Mala para viagem">
+<label>Descrição</label><textarea id="desc" placeholder="Ex: Mala em polietileno rosa, 2 kits de bagagem."></textarea>
+<label>Preço que a loja recebe (R$)</label><input id="preco" type="number" placeholder="345">
 <button class="btn btn-green" onclick="gerarCupom()">🎨 Gerar cupom de exemplo</button>
 
 <div id="cupomOut" style="display:none;margin-top:10px">
@@ -111,7 +112,7 @@ document.getElementById('out').style.display='block';
 }
 function copiar(){navigator.clipboard.writeText(document.getElementById('txtAbordagem').textContent);document.getElementById('msg').textContent='✅ Abordagem copiada!';}
 async function salvar(){
-var lead={handle:document.getElementById('handle').value,loja:document.getElementById('loja').value,cidade:document.getElementById('cidade').value,vertical:document.getElementById('vertical').value,abordagem:document.getElementById('txtAbordagem').textContent,cupom:window.lastCupom||''};
+var lead={handle:document.getElementById('handle').value,loja:document.getElementById('loja').value,cidade:document.getElementById('cidade').value,vertical:document.getElementById('vertical').value,abordagem:document.getElementById('txtAbordagem').textContent,cupom:window.lastCupom||'',meio:''};
 var r=await fetch('/api/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(lead)});
 if(r.ok){document.getElementById('msg').textContent='💾 Lead salvo!';carregar();}
 }
@@ -123,7 +124,12 @@ var COR={abordado:'#d97706',agendado:'#2563eb',convertido:'#22c55e'};
 var div=document.createElement('div');div.className='lead';
 var html='<b>'+esc(l.loja)+'</b> · '+esc(l.cidade)+' · '+esc(l.vertical)+' <span class="st">'+l.status+'</span>';
 html+='<div class="row">';
-html+='<button style="background:#334155;color:#fff" title="copiar abordagem" onclick="recopiar(\\''+l.id+'\\')">📋 copiar</button>';
+html+='<select title="meio de abordagem" onchange="setMeio(\\''+l.id+'\\',this.value)" style="background:'+(l.meio?'#0ea5e9':'#243044')+'">'
++'<option value=""'+((!l.meio)?' selected':'')+'>meio...</option>'
++'<option value="instagram"'+(l.meio==='instagram'?' selected':'')+'>Instagram</option>'
++'<option value="whatsapp"'+(l.meio==='whatsapp'?' selected':'')+'>WhatsApp</option>'
++'<option value="indicacao"'+(l.meio==='indicacao'?' selected':'')+'>Indicação</option>'
++'</select>';
 html+='<button style="background:#7f1d1d;color:#fff" title="excluir lead" onclick="del(\\''+l.id+'\\')">🗑️</button>';
 ['abordado','agendado','convertido'].forEach(function(st){
 var ativo=(l.status===st);
@@ -136,7 +142,7 @@ el.appendChild(div);
 window._leads=d.leads||[];
 }
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
-function recopiar(id){var l=(window._leads||[]).find(function(x){return x.id===id});if(l){navigator.clipboard.writeText(l.abordagem);document.getElementById('msg').textContent='✅ Abordagem copiada!';}}
+async function setMeio(id,meio){await fetch('/api/lead',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,meio:meio})});carregar();}
 async function status(id,st){await fetch('/api/lead',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:st})});carregar();}
 async function del(id){
 if(!confirm('Excluir este lead?'))return;
@@ -247,7 +253,7 @@ export default {
     if (url.pathname === '/api/lead' && req.method === 'POST') {
       const b = await req.json();
       const leads = JSON.parse(await env.LEADS.get('leads') || '[]');
-      leads.unshift({ id: 'ld_' + Date.now(), status: 'novo', at: new Date().toISOString(), handle: b.handle||'', loja: b.loja||'', cidade: b.cidade||'', vertical: b.vertical||'', abordagem: b.abordagem||'', cupom: b.cupom||'' });
+      leads.unshift({ id: 'ld_' + Date.now(), status: 'novo', meio: b.meio||'', at: new Date().toISOString(), handle: b.handle||'', loja: b.loja||'', cidade: b.cidade||'', vertical: b.vertical||'', abordagem: b.abordagem||'', cupom: b.cupom||'' });
       await env.LEADS.put('leads', JSON.stringify(leads));
       return new Response(JSON.stringify({ ok: true }), { headers: H });
     }
@@ -256,7 +262,11 @@ export default {
       const b = await req.json();
       const leads = JSON.parse(await env.LEADS.get('leads') || '[]');
       const l = leads.find(x => x.id === b.id);
-      if (l) { l.status = b.status; await env.LEADS.put('leads', JSON.stringify(leads)); }
+      if (l) {
+        if (b.status) l.status = b.status;
+        if (b.meio !== undefined) l.meio = b.meio;
+        await env.LEADS.put('leads', JSON.stringify(leads));
+      }
       return new Response(JSON.stringify({ ok: !!l }), { headers: H });
     }
 

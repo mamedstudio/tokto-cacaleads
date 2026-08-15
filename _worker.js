@@ -93,7 +93,7 @@ var loja=document.getElementById('loja').value||'lojista';
 var t;
 if(window.lastCupom){
 t=loja+', fiz um cupom com sua peça — olha como ficaria: '+window.lastCupom+'\\n'
-+'CupomClic é Sem DM ou chat — é PIX na sua conta na hora. Cliente clica nos stories ou whats e compra!';
++'CupomClic é Sem DM ou chat — é PIX na sua conta na hora. Cliente clica nos stories ou whats e compra! Saiba mais https://www.tokto.com.br/';
 }else{
 t=loja+', sem "Eu quero" na live: cliente clica e paga na hora. Te mostro como, sem mensalidade?';
 }

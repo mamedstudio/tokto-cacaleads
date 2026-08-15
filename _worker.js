@@ -1,4 +1,4 @@
-// ==================== TOKTO CAÇA-LEADS v9 ====================
+// ==================== TOKTO CAÇA-LEADS v10 ====================
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 const HTML = `<!DOCTYPE html>
@@ -93,7 +93,7 @@ var loja=document.getElementById('loja').value||'lojista';
 var t;
 if(window.lastCupom){
 t=loja+', fiz um cupom com sua peça — olha como ficaria: '+window.lastCupom+'\\n'
-+'Sem "Eu quero". Cliente clica e paga na hora!';
++'Sem DM ou chat — o PIX cai direto na sua conta. Cliente clica nos stories ou whats e compra!';
 }else{
 t=loja+', sem "Eu quero" na live: cliente clica e paga na hora. Te mostro como, sem mensalidade?';
 }
@@ -270,6 +270,13 @@ document.getElementById('zoomOverlay').onclick=function(){this.classList.remove(
 </body></html>`;
 }
 
+function shortId(){
+  const chars='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let id='';
+  for(let i=0;i<7;i++) id+=chars[Math.floor(Math.random()*chars.length)];
+  return id;
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
@@ -279,6 +286,16 @@ export default {
 
     if (url.pathname === '/dash') return new Response(DASH, { headers: { 'Content-Type': 'text/html;charset=utf-8' } });
 
+    // Rota curta: /r/XXXXXXX
+    const rMatch = url.pathname.match(/^\/r\/([A-Za-z0-9]+)$/);
+    if (rMatch && req.method === 'GET') {
+      const id = rMatch[1];
+      const rec = JSON.parse(await env.LEADS.get('cupom_' + id) || 'null');
+      if (!rec) return new Response('Cupom não encontrado.', { status: 404 });
+      return new Response(renderCupom(rec, url.origin + '/r/' + id), { headers: { 'Content-Type': 'text/html;charset=utf-8' } });
+    }
+
+    // Rota antiga (retrocompat): /c?id=cp_XXXX
     if (url.pathname === '/c' && req.method === 'GET') {
       const id = url.searchParams.get('id');
       const rec = JSON.parse(await env.LEADS.get('cupom_' + id) || 'null');
@@ -301,9 +318,9 @@ export default {
       }
       if (!dataUrl) return new Response(JSON.stringify({ error: 'foto obrigatória' }), { headers: H });
       if (dataUrl.length > 1500000) return new Response(JSON.stringify({ error: 'foto muito grande — envie uma menor' }), { headers: H });
-      const id = 'cp_' + Date.now().toString(36);
+      const id = shortId();
       await env.LEADS.put('cupom_' + id, JSON.stringify({ id, dataUrl, name: b.name, desc: b.desc||'', price: b.price, loja: b.loja, cidade: b.cidade, vertical: b.vertical, at: new Date().toISOString() }));
-      return new Response(JSON.stringify({ id, link: url.origin + '/c?id=' + id }), { headers: H });
+      return new Response(JSON.stringify({ id, link: url.origin + '/r/' + id }), { headers: H });
     }
 
     if (url.pathname === '/api/leads' && req.method === 'GET') {

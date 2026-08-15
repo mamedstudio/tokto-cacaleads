@@ -1,4 +1,4 @@
-// ==================== TOKTO CAÇA-LEADS v7 ====================
+// ==================== TOKTO CAÇA-LEADS v9 ====================
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 const HTML = `<!DOCTYPE html>
@@ -72,16 +72,6 @@ pre{background:#0d131f;border:1px solid var(--bord);border-radius:10px;padding:1
 </div>
 
 <script>
-var DOR={
-moda:'"quanto tá?" e "guarda pra mim"',
-moveis:'"quanto o sofá?" e "manda a medida"',
-veiculos:'"quanto tá na pronta entrega?"',
-joias:'"quanto o par?" e "manda mais foto"',
-eletro:'"qual o preço à vista?"',
-colchoes:'"quanto o king?" e "tem entrega?"',
-construcao:'"quanto o milheiro?" e "entrega onde?"',
-outro:'"quanto tá?" e "guarda pra mim"'
-};
 function fileToDataUrl(file,max){max=max||800;return new Promise(function(res){var rd=new FileReader();rd.onload=function(e){var img=new Image();img.onload=function(){var c=document.createElement('canvas');var sc=Math.min(1,max/Math.max(img.width,img.height));c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.8));};img.src=e.target.result;};rd.readAsDataURL(file);});}
 async function gerarCupom(){
 var msg=document.getElementById('msg');
@@ -100,15 +90,13 @@ else{msg.textContent='Erro: '+(d.error||'falha');}
 function copiarCupom(){navigator.clipboard.writeText('👉 Clique aqui e veja seu cupom como ficaria: '+window.lastCupom);document.getElementById('msg').textContent='✅ Linha do cupom copiada!';}
 function gerar(){
 var loja=document.getElementById('loja').value||'lojista';
-var v=document.getElementById('vertical').value;
-var t='Oi '+loja+', aqui é Márcio do Tokto.\\n'
-+'Três lojas da região já usam nosso CupomClic pra vender nas lives e no WhatsApp:\\n'
-+'• Érica Store (Sta. Cruz do Rio Pardo)\\n• Anjoz Store (Bauru)\\n• Era Delas (Marília)\\n'
-+'A cliente clica no cupom e já paga no próprio link — sem '+DOR[v]+' no direct.\\n'
-+'Sem mensalidade. Você recebe 100% do preço que anunciar.\\n'
-+'Os 15% são somados por cima — quem paga é quem compra, não sai do seu bolso.\\n'
-+(window.lastCupom?('👉 Clique aqui e veja seu cupom como ficaria: '+window.lastCupom+'\\n'):'')
-+'Marca aqui rapidinho: https://agendamento-cupomclic.vercel.app';
+var t;
+if(window.lastCupom){
+t=loja+', fiz um cupom com sua peça — olha como ficaria: '+window.lastCupom+'\\n'
++'Sem "Eu quero". Cliente clica e paga na hora!';
+}else{
+t=loja+', sem "Eu quero" na live: cliente clica e paga na hora. Te mostro como, sem mensalidade?';
+}
 document.getElementById('txtAbordagem').textContent=t;
 document.getElementById('out').style.display='block';
 }

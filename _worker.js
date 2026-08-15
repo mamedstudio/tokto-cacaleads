@@ -1,4 +1,4 @@
-// ==================== TOKTO CAÇA-LEADS v6 ====================
+// ==================== TOKTO CAÇA-LEADS v7 ====================
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 const HTML = `<!DOCTYPE html>
@@ -24,11 +24,13 @@ pre{background:#0d131f;border:1px solid var(--bord);border-radius:10px;padding:1
 .row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}.row button{flex:1;padding:8px;border:none;border-radius:8px;font-size:12px;font-weight:bold;cursor:pointer}
 .row select{flex:1;background:#243044;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:bold;padding:8px;outline:none}
 #cupomOut a{color:#38bdf8;word-break:break-all}
+.dashlink{display:block;text-align:center;font-size:13px;color:#38bdf8;text-decoration:none;margin-top:4px}
 </style>
 </head>
 <body>
 <div class="wrap">
 <h1>🎯 Caça-Leads Tokto</h1>
+<a class="dashlink" href="/dash">📊 ver dashboard</a>
 
 <div class="card">
 <label>@handle do Instagram</label><input id="handle" placeholder="@galpaoamoveismarilia">
@@ -154,6 +156,75 @@ carregar();
 </body>
 </html>`;
 
+const DASH = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - Caça-Leads Tokto</title>
+<style>
+:root{--bg:#0d131f;--card:#161f30;--bord:#243044;--mut:#94a3b8;--green:#22c55e;--orange:#f97316}
+*{box-sizing:border-box}body{background:var(--bg);color:#fff;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;margin:0;padding:16px}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:20px;color:var(--orange);text-align:center}
+.top{display:flex;justify-content:space-between;align-items:center}
+.top a{color:#38bdf8;font-size:13px;text-decoration:none}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:14px 0}
+.kpi{background:var(--card);border:1px solid var(--bord);border-radius:12px;padding:12px;text-align:center}
+.kpi b{display:block;font-size:22px}
+.kpi span{font-size:11px;color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--bord);border-radius:14px;padding:14px;margin-bottom:14px}
+.card h2{font-size:14px;margin:0 0 10px;color:var(--mut)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px;border-bottom:1px solid var(--bord);text-align:left}
+th{color:var(--mut);font-size:11px;text-transform:uppercase}
+td.num,th.num{text-align:right}
+@media(max-width:600px){.kpis{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top"><h1>📊 Dashboard Caça-Leads</h1><a href="/">← voltar</a></div>
+
+<div class="kpis" id="kpis"></div>
+
+<div class="card"><h2>Por Segmento (vertical)</h2>
+<table><tr><th>Segmento</th><th class="num">Leads</th><th class="num">Convert.</th><th class="num">Taxa</th></tr><tbody id="tbSeg"></tbody></table></div>
+
+<div class="card"><h2>Por Meio de abordagem</h2>
+<table><tr><th>Meio</th><th class="num">Leads</th><th class="num">Convert.</th><th class="num">Taxa</th></tr><tbody id="tbMeio"></tbody></table></div>
+
+<div class="card"><h2>Por Cidade</h2>
+<table><tr><th>Cidade</th><th class="num">Leads</th><th class="num">Convert.</th><th class="num">Taxa</th></tr><tbody id="tbCid"></tbody></table></div>
+</div>
+
+<script>
+function render(id,m){
+var el=document.getElementById(id);var html='';
+for(var k in m){var t=m[k].t,c=m[k].c;var tx=t?Math.round(c/t*100):0;
+html+='<tr><td>'+k+'</td><td class="num">'+t+'</td><td class="num">'+c+'</td><td class="num">'+tx+'%</td></tr>';}
+el.innerHTML=html||'<tr><td colspan="4">sem dados ainda</td></tr>';
+}
+function grp(L,key){var m={};L.forEach(function(l){var k=String(l[key]||'').trim()||'(sem)';if(!m[k])m[k]={t:0,c:0};m[k].t++;if(l.status==='convertido')m[k].c++;});return m;}
+fetch('/api/leads').then(function(r){return r.json();}).then(function(d){
+var L=d.leads||[];var total=L.length;
+var st={novo:0,abordado:0,agendado:0,convertido:0};
+L.forEach(function(l){if(st[l.status]!=null)st[l.status]++;});
+var taxa=total?Math.round(st.convertido/total*100):0;
+document.getElementById('kpis').innerHTML=
+'<div class="kpi"><b>'+total+'</b><span>Leads</span></div>'+
+'<div class="kpi"><b>'+st.abordado+'</b><span>Abordados</span></div>'+
+'<div class="kpi"><b>'+st.agendado+'</b><span>Agendados</span></div>'+
+'<div class="kpi"><b style="color:var(--green)">'+st.convertido+'</b><span>Convertidos</span></div>'+
+'<div class="kpi"><b style="color:var(--orange)">'+taxa+'%</b><span>Conversão</span></div>';
+render('tbSeg',grp(L,'vertical'));
+render('tbMeio',grp(L,'meio'));
+render('tbCid',grp(L,'cidade'));
+});
+</script>
+</body>
+</html>`;
+
 function renderCupom(r, link){
   const net=Number(r.price)||0;
   const buyer=net*1.15;
@@ -217,6 +288,8 @@ export default {
     const H = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
 
     if (url.pathname === '/') return new Response(HTML, { headers: { 'Content-Type': 'text/html;charset=utf-8' } });
+
+    if (url.pathname === '/dash') return new Response(DASH, { headers: { 'Content-Type': 'text/html;charset=utf-8' } });
 
     if (url.pathname === '/c' && req.method === 'GET') {
       const id = url.searchParams.get('id');
